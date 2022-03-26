@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "contract collection made by Julius Raynaldi",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "hardhat run scripts/run.js"
+  },
   "author": "Julius Raynaldi",
   "license": "ISC",
   "devDependencies": {
