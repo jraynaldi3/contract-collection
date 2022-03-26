@@ -12,7 +12,7 @@ pragma solidity ^0.8.4;
 *TODO add member count and get all member (idealy in different .sol file)
 */
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "hardhat/console.sol";
@@ -214,7 +214,7 @@ contract MultiSig is AccessControl{
             (bool success , ) = address(transaction.to).call{value: transaction.amount}("");
             require (success,"Failed to execute");
         } else {
-            IERC20(transaction.tokenAddress).transferFrom(address(this), transaction.to, transaction.amount);
+            IERC20(transaction.tokenAddress).transfer(transaction.to, transaction.amount);
         }
         transaction.executed = true;
         emit ExecuteTransaction(_id, msg.sender);
