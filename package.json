@@ -4,7 +4,8 @@
   "description": "contract collection made by Julius Raynaldi",
   "main": "index.js",
   "scripts": {
-    "test": "hardhat run scripts/run.js"
+    "test": "hardhat run scripts/run.js",
+    "local": "hardhat run scropts/run.js --network localhost"
   },
   "author": "Julius Raynaldi",
   "license": "ISC",

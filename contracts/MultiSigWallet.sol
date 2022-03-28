@@ -9,13 +9,13 @@ pragma solidity ^0.8.4;
 *you can use it but make sure to double check the code before deployment
 *
 *
-*TODO add member count and get all member (idealy in different .sol file)
 */
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "hardhat/console.sol";
+import "./library/MemberList.sol";
 
 /*What Difference?
 * 1. using Openzeppelin AccesControl instead of define owner manualy
@@ -25,6 +25,7 @@ import "hardhat/console.sol";
 * 5. using struct to store member data (indevelopment)
 * 6. add duration of transaction
 * 7. only submitter of transaction can execute transaction
+* 8. add quorum but only one role can set Quorum
 */
 
 interface MultiSigIERC20 is IERC20 {
@@ -44,20 +45,22 @@ interface MultiSigIERC20 is IERC20 {
 * Transaction Life Cycle:
 * "Owner" Submit transaction -> "Approver" and "Owner" can approve transaction -> "Owner" Execute transaction
 */
-contract MultiSig is AccessControl{
+contract MultiSig is MemberList{
     event SubmitTransaction (uint id,string tokenSymbol, address to, uint amount, string data,uint endDate);
     event ApproveTransaction (uint id, address approver);
     event RevokeApproval (uint id, address revoker);
     event ExecuteTransaction (uint id, address executor);
 
     using Counters for Counters.Counter;
-    Counters.Counter public _transactionId;
+    Counters.Counter private _transactionId;
 
     error Unauthorized();
     error AlreadyApproved();
     error NotApprovedYet();
     error WrongTime();
     error AlreadyExecuted();
+
+    uint public quorum; //an minimal approval to be executed
 
     struct Transaction {
         uint id; //transaction id
@@ -72,16 +75,10 @@ contract MultiSig is AccessControl{
         bool executed; // is transaction executed
     }
 
-    struct Member {
-        bytes32[] roles; //roles of that member
-        address memberAddress; //mmeber address
-    }
-
     mapping(uint => mapping(address => bool)) approvedBy; //that address approved the transaction or not
 
     Transaction[] public transactions;
-    Member[] public members;
-
+    
     constructor (address[] memory owners) payable {
         console.log(msg.sender);
         _setupRole("Super", msg.sender);
@@ -92,8 +89,9 @@ contract MultiSig is AccessControl{
         
         for (uint i; i < owners.length;i++){
              grantRole("Owner", owners[i]);
-             grantRole("Approver", owners[i]);
         }
+
+        setQuorum(1);
         
     }
 
@@ -209,7 +207,8 @@ contract MultiSig is AccessControl{
         if (block.timestamp < transaction.endDate) revert WrongTime();
         if (transaction.submitter != msg.sender) revert Unauthorized();
         if (transaction.executed == true) revert AlreadyExecuted();
-        require(transaction.approveCount > 0, "Not Approved");
+        
+        require(transaction.approveCount > quorum, "Not Approved");
         if (transaction.tokenAddress == address(0)) {
             (bool success , ) = address(transaction.to).call{value: transaction.amount}("");
             require (success,"Failed to execute");
@@ -224,4 +223,11 @@ contract MultiSig is AccessControl{
     function getApproveCount(uint _id) external view returns(uint) {
         return transactions[_id].approveCount;
     }
+
+    //function for set the quorum of transaction, ONLY for "Super" role 
+    function setQuorum (uint num) public{
+        if(!hasRole("Super",msg.sender)) revert Unauthorized();
+        quorum = num;
+    }
+
 }
