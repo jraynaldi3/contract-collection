@@ -117,6 +117,8 @@ contract MultiSig is MemberList{
     * @param _amount = amount of token will be transfered 
     * @param duration = duration of transaction
     * @param _data = data for this transaction
+    *
+    * emit a {SubmitTransaction} event
     */
     function tokenSubmitTransaction (
             address _token, 
@@ -152,6 +154,8 @@ contract MultiSig is MemberList{
     *@param _amount amount ETH will be transfered
     *@param duration duration of transaction 
     *@param _data transaction data
+    *
+    * emit {SubmitTransaction} event
     */
     function ethSubmitTransaction (address _to, uint _amount,uint duration, string calldata _data) public onlyRole("Owner"){
         uint _id = _transactionId.current();
@@ -178,6 +182,7 @@ contract MultiSig is MemberList{
     /** 
     *@dev function to approve transaction
     *@param _id id of transaction
+    * emit a {ApproveTransaction} event
      */
     function approveTransaction (uint _id) public approvalReq(_id) {
         if (approvedBy[_id][msg.sender]==true) revert AlreadyApproved();
@@ -193,6 +198,7 @@ contract MultiSig is MemberList{
     /**
     *@dev function to revoke approval
     *@param _id id of transaction
+    * emit a {RevokeApproval} event
     */
     function revokeApproval(uint _id) public approvalReq(_id){
         if (approvedBy[_id][msg.sender]==false) revert NotApprovedYet();
@@ -208,6 +214,7 @@ contract MultiSig is MemberList{
     /**
     *@dev function to execute transaction 
     *@param _id id of transaction
+    *emit a {ExecuteTransaction} event
     */
     function executeTransaction(uint _id) public {
         
@@ -230,6 +237,7 @@ contract MultiSig is MemberList{
     /** 
     *@dev function for show the approveCount of transaction
     *@param _id id of transaction
+    *@return uint number of people already approve of transaction
     */
     function getApproveCount(uint _id) external view returns(uint) {
         return transactions[_id].approveCount;
