@@ -2,22 +2,19 @@
 
 pragma solidity ^0.8.4;
 
-/*
-*@author: Julius Raynaldi
-*Inspired by solidity-by-example.org (look at What Difference? comment section)
-*for practice purpose
-*you can use it but make sure to double check the code before deployment
-*
-*
-*/
-
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "hardhat/console.sol";
+import "./interface/IMultiSigFactory.sol";
 import "./library/MemberList.sol";
 
-/*What Difference?
+/**
+*Inspired by solidity-by-example.org (look at What Difference? comment section)
+*for practice purpose
+*you can use it but make sure to double check the code before deployment
+*
+* What Difference?
 * 1. using Openzeppelin AccesControl instead of define owner manualy
 * 2. using more role that will be usefull in more wide case
 * 3. using IERC20.sol for transfer another token than ETH
@@ -33,8 +30,11 @@ interface MultiSigIERC20 is IERC20 {
     function symbol() external view returns (string memory);
 }
 
-/*
-* A multi signature wallet 
+/**
+* @title Multi Signature Wallet
+* @author Julius Raynaldi
+* @notice contract of multi signature wallet, some role can submit a transaction but need other people to 
+* sign before the transaction can be executed
 *
 * Roles:
 * - "Owner" role work as admin who can submit and execute transaction for wallet 
@@ -80,19 +80,22 @@ contract MultiSig is MemberList{
     Transaction[] public transactions;
     
     constructor (address[] memory owners) payable {
-        console.log(msg.sender);
+        address deployer = IMultiSigFactory(msg.sender)._msgSender();
+        _setupRole("Super", deployer);
         _setupRole("Super", msg.sender);
-        console.log(hasRole("Super", msg.sender));
+        console.log(hasRole("Super", deployer));
+        console.log("roleByNum[msg.sender] : ", roleByNum[msg.sender]);
         _setRoleAdmin("Owner", "Super");
         _setRoleAdmin("Approver", "Owner");
-        grantRole("Owner", msg.sender);
+        grantRole("Owner", deployer);
         
         for (uint i; i < owners.length;i++){
              grantRole("Owner", owners[i]);
         }
 
         setQuorum(1);
-        
+        renounceRole("Super", msg.sender);
+        console.log("roleByNum[msg.sender] : ", roleByNum[msg.sender]);
     }
 
     //Require should met when interaction with approval (approveTransaction & revokeApproval)
@@ -104,16 +107,16 @@ contract MultiSig is MemberList{
         _;
     }
 
-    /*
+    /**
     * @dev theres a problem when ETH itself is not an ERC-20 token so i decide to separate these with 2
     * function instead of using conditional operation
     *
-    * @params 
-    * - _token = token address which will be transfered
-    * - _to = the address that will be recive transfer from this address
-    * - _amount = amount of token will be transfered 
-    * - duration = duration of transaction
-    * - _data = data for this transaction
+    *  
+    * @param _token = token address which will be transfered
+    * @param _to = the address that will be recive transfer from this address
+    * @param _amount = amount of token will be transfered 
+    * @param duration = duration of transaction
+    * @param _data = data for this transaction
     */
     function tokenSubmitTransaction (
             address _token, 
@@ -142,14 +145,13 @@ contract MultiSig is MemberList{
         _transactionId.increment();
     }
 
-    /*
+    /**
     *@dev use this function to transfer ETH from this contract
-    * 
-    *@params 
-    * - _to = address that will recive 
-    * - _amount = amount ETH will be transfered
-    * - duration = duration of transaction 
-    * - _data = transaction data
+    *
+    *@param _to  address that will recive 
+    *@param _amount amount ETH will be transfered
+    *@param duration duration of transaction 
+    *@param _data transaction data
     */
     function ethSubmitTransaction (address _to, uint _amount,uint duration, string calldata _data) public onlyRole("Owner"){
         uint _id = _transactionId.current();
@@ -173,8 +175,10 @@ contract MultiSig is MemberList{
         _transactionId.increment();
     }
 
-    //function to approve transaction
-    // @param id of transaction
+    /** 
+    *@dev function to approve transaction
+    *@param _id id of transaction
+     */
     function approveTransaction (uint _id) public approvalReq(_id) {
         if (approvedBy[_id][msg.sender]==true) revert AlreadyApproved();
 
@@ -186,8 +190,10 @@ contract MultiSig is MemberList{
         emit ApproveTransaction(_id, msg.sender);
     }
 
-    //function to revoke approval
-    // @param id of transaction
+    /**
+    *@dev function to revoke approval
+    *@param _id id of transaction
+    */
     function revokeApproval(uint _id) public approvalReq(_id){
         if (approvedBy[_id][msg.sender]==false) revert NotApprovedYet();
 
@@ -199,8 +205,10 @@ contract MultiSig is MemberList{
         emit RevokeApproval(_id, msg.sender);
     }
 
-    //function to execute transaction 
-    //@param id of transaction
+    /**
+    *@dev function to execute transaction 
+    *@param _id id of transaction
+    */
     function executeTransaction(uint _id) public {
         
         Transaction storage transaction = transactions[_id];
@@ -219,12 +227,18 @@ contract MultiSig is MemberList{
         emit ExecuteTransaction(_id, msg.sender);
     }
 
-    //function for show the approveCount of transaction
+    /** 
+    *@dev function for show the approveCount of transaction
+    *@param _id id of transaction
+    */
     function getApproveCount(uint _id) external view returns(uint) {
         return transactions[_id].approveCount;
     }
 
-    //function for set the quorum of transaction, ONLY for "Super" role 
+    /**
+    *@dev function for set the quorum of transaction, ONLY for "Super" role 
+    *@param num new quorum count for set
+    */
     function setQuorum (uint num) public{
         if(!hasRole("Super",msg.sender)) revert Unauthorized();
         quorum = num;
