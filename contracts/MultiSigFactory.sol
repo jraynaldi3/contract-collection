@@ -6,6 +6,12 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./MultiSig.sol";
 import "hardhat/console.sol";
 
+/**
+* @author Julius Raynaldi
+* @title Multi Signature Wallet Contract Factory
+* @dev contract to make new Multi Signature Wallet {MultiSig} contract
+* implementation of {IMultiSigFactory} 
+ */
 contract MultiSigFactory {
     using Counters for Counters.Counter;
 
@@ -30,10 +36,23 @@ contract MultiSigFactory {
         }));
         _walletIds.increment();
         emit WalletCreated(newId, _name, address(wallet));
-        console.log(wallet);
         return wallet;
     }
 
+    function getAllWallet() external view returns(Wallet[] memory){
+        return wallets;
+    }
+
+    /*
+    //TODO make interface of {MultiSig} 
+    function getAllWalletBySender() external view returns(Wallet[] memory){
+        address[] memory senderWallet;
+        for (uint i = 0; i<wallets.length; i++){
+            if(wallet.)
+        }
+    }
+    */
+    
     function _msgSender() external view returns(address){
         return msg.sender;
     }

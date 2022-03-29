@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "hardhat/console.sol";
 import "./interface/IMultiSigFactory.sol";
-import "./library/MemberList.sol";
+import "./library/MemberManagement.sol";
 
 /**
 *Inspired by solidity-by-example.org (look at What Difference? comment section)
@@ -15,14 +15,14 @@ import "./library/MemberList.sol";
 *you can use it but make sure to double check the code before deployment
 *
 * What Difference?
-* 1. using Openzeppelin AccesControl instead of define owner manualy
+* 1. using Openzeppelin AccesControlEnumerable instead of define owner manualy
 * 2. using more role that will be usefull in more wide case
 * 3. using IERC20.sol for transfer another token than ETH
 * 4. using custom Error
 * 5. using struct to store member data (indevelopment)
 * 6. add duration of transaction
 * 7. only submitter of transaction can execute transaction
-* 8. add quorum but only one role can set Quorum
+* 8. (UPDATE) Quorum now using percentage of total member (using openzeppelin AccessControlEnumerable)
 */
 
 interface MultiSigIERC20 is IERC20 {
@@ -45,7 +45,7 @@ interface MultiSigIERC20 is IERC20 {
 * Transaction Life Cycle:
 * "Owner" Submit transaction -> "Approver" and "Owner" can approve transaction -> "Owner" Execute transaction
 */
-contract MultiSig is MemberList{
+contract MultiSig is MemberManagement{
     event SubmitTransaction (uint id,string tokenSymbol, address to, uint amount, string data,uint endDate);
     event ApproveTransaction (uint id, address approver);
     event RevokeApproval (uint id, address revoker);
@@ -93,7 +93,7 @@ contract MultiSig is MemberList{
              grantRole("Owner", owners[i]);
         }
 
-        setQuorum(1);
+        setQuorum(50);
         renounceRole("Super", msg.sender);
         console.log("roleByNum[msg.sender] : ", roleByNum[msg.sender]);
     }
@@ -183,7 +183,12 @@ contract MultiSig is MemberList{
     *@dev function to approve transaction
     *@param _id id of transaction
     * emit a {ApproveTransaction} event
-     */
+    *
+    *Require :
+    * - Transaction duration not ended yet (see {approvalReq})
+    * - msg.sender is one of "Approver" or "Owner" (see {approvalReq})
+    * - msg.sender not approved the transaction yet
+    */
     function approveTransaction (uint _id) public approvalReq(_id) {
         if (approvedBy[_id][msg.sender]==true) revert AlreadyApproved();
 
@@ -199,6 +204,11 @@ contract MultiSig is MemberList{
     *@dev function to revoke approval
     *@param _id id of transaction
     * emit a {RevokeApproval} event
+    *
+    *Require :
+    * - Transaction duration not ended yet (see {approvalReq})
+    * - msg.sender is one of "Approver" or "Owner" (see {approvalReq})
+    * - msg.sender has approved the transaction 
     */
     function revokeApproval(uint _id) public approvalReq(_id){
         if (approvedBy[_id][msg.sender]==false) revert NotApprovedYet();
@@ -215,6 +225,12 @@ contract MultiSig is MemberList{
     *@dev function to execute transaction 
     *@param _id id of transaction
     *emit a {ExecuteTransaction} event
+    *
+    *Requires:
+    * - Transaction duration has been ended 
+    * - executor must be submitter of transaction
+    * - Transaction not executed yet
+    * - Approval fullfill the quorum 
     */
     function executeTransaction(uint _id) public {
         
@@ -223,7 +239,7 @@ contract MultiSig is MemberList{
         if (transaction.submitter != msg.sender) revert Unauthorized();
         if (transaction.executed == true) revert AlreadyExecuted();
         
-        require(transaction.approveCount > quorum, "Not Approved");
+        require(transaction.approveCount > minimalApproval(), "Not Approved");
         if (transaction.tokenAddress == address(0)) {
             (bool success , ) = address(transaction.to).call{value: transaction.amount}("");
             require (success,"Failed to execute");
@@ -250,6 +266,11 @@ contract MultiSig is MemberList{
     function setQuorum (uint num) public{
         if(!hasRole("Super",msg.sender)) revert Unauthorized();
         quorum = num;
+    }
+
+    function minimalApproval() internal view returns(uint minimal){
+        uint totalMember = getRoleMemberCount("Owner") + getRoleMemberCount("Approver");
+        minimal = totalMember * quorum / 100;
     }
 
 }
