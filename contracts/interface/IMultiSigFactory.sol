@@ -7,6 +7,11 @@ pragma solidity ^0.8.4;
 */
 
 interface IMultiSigFactory {
+    struct Wallet {
+        uint id; //id of wallet
+        string name; //name of wallet
+        address walletAddress; //the address of wallet
+    }
 
     /**
     * @dev create new multi signature wallet
@@ -17,9 +22,17 @@ interface IMultiSigFactory {
     function createWallet(string memory _name, address[] memory owners) external returns(address);
 
     /**
+    *@dev get all wallet created
+    *@return Wallet all wallet created
+    */
+    function getAllWallets() external view returns(Wallet[] memory);
+
+    /**
     * @notice return address of sender of {MultiSigFactory}
     * @dev for constructor of {MultiSig} to pass "Super" Role to msg.sender
     * @return address msg.sender address
      */
     function _msgSender() external view returns(address);
+
+
 }

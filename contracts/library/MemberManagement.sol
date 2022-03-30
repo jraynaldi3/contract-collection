@@ -5,7 +5,7 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "../interface/IMemberList.sol";
+import "../interface/IMemberManagement.sol";
 
 /**
 *@author Julius Raynaldi 
@@ -14,7 +14,7 @@ import "../interface/IMemberList.sol";
 * This Contract is using for user interface
 * When Login in contract factory people will see which MultiSigWallet they participate to
 */
-contract MemberManagement is IMemberList, AccessControlEnumerable {
+contract MemberManagement is IMemberManagement, AccessControlEnumerable {
 
     using Counters for Counters.Counter;
     using SafeMath for uint256;

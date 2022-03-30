@@ -3,6 +3,8 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./interface/IMultiSig.sol";
+import "./interface/IMultiSigFactory.sol";
 import "./MultiSig.sol";
 import "hardhat/console.sol";
 
@@ -12,21 +14,15 @@ import "hardhat/console.sol";
 * @dev contract to make new Multi Signature Wallet {MultiSig} contract
 * implementation of {IMultiSigFactory} 
  */
-contract MultiSigFactory {
+contract MultiSigFactory is IMultiSigFactory{
     using Counters for Counters.Counter;
 
     event WalletCreated(uint id, string name, address walletAddress);
     Counters.Counter private _walletIds;
 
-    struct Wallet {
-        uint id; //id of wallet
-        string name; //name of wallet
-        address walletAddress; //the address of wallet
-    }
-
     Wallet[] wallets;
 
-    function createWallet(string memory _name, address[] memory owners) external returns(address){
+    function createWallet(string memory _name, address[] memory owners) external override returns(address){
         address wallet = address(new MultiSig(owners));
         uint newId = _walletIds.current();
         wallets.push(Wallet({
@@ -39,21 +35,11 @@ contract MultiSigFactory {
         return wallet;
     }
 
-    function getAllWallet() external view returns(Wallet[] memory){
+    function getAllWallets() external view override returns(Wallet[] memory){
         return wallets;
     }
-
-    /*
-    //TODO make interface of {MultiSig} 
-    function getAllWalletBySender() external view returns(Wallet[] memory){
-        address[] memory senderWallet;
-        for (uint i = 0; i<wallets.length; i++){
-            if(wallet.)
-        }
-    }
-    */
     
-    function _msgSender() external view returns(address){
+    function _msgSender() external view override returns(address){
         return msg.sender;
     }
 }

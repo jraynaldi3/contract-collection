@@ -15,9 +15,11 @@
     "chai": "^4.2.0",
     "ethereum-waffle": "^3.0.0",
     "ethers": "^5.0.0",
-    "hardhat": "^2.9.1"
+    "hardhat": "^2.9.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.19"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.5.0"
+    "@openzeppelin/contracts": "^4.5.0",
+    "prettier": "^2.6.1"
   }
 }
