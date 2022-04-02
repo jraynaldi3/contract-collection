@@ -4,8 +4,6 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "hardhat/console.sol";
 import "./interface/IMultiSigFactory.sol";
 import "./library/MemberManagement.sol";
 
@@ -83,8 +81,6 @@ contract MultiSig is MemberManagement{
         address deployer = IMultiSigFactory(msg.sender)._msgSender();
         _setupRole("Super", deployer);
         _setupRole("Super", msg.sender);
-        console.log(hasRole("Super", deployer));
-        console.log("roleByNum[msg.sender] : ", roleByNum[msg.sender]);
         _setRoleAdmin("Owner", "Super");
         _setRoleAdmin("Approver", "Owner");
         grantRole("Owner", deployer);
@@ -95,7 +91,6 @@ contract MultiSig is MemberManagement{
 
         setQuorum(50);
         renounceRole("Super", msg.sender);
-        console.log("roleByNum[msg.sender] : ", roleByNum[msg.sender]);
     }
 
     //Require should met when interaction with approval (approveTransaction & revokeApproval)
@@ -268,9 +263,20 @@ contract MultiSig is MemberManagement{
         quorum = num;
     }
 
+    /**
+    *@dev approvalCount should fullfill the minimalApproval 
+    *@return minimal a minimal number of approval before transaction can be executed
+     */
     function minimalApproval() internal view returns(uint minimal){
         uint totalMember = getRoleMemberCount("Owner") + getRoleMemberCount("Approver");
         minimal = totalMember * quorum / 100;
     }
 
+    /**
+    *@dev help the front end 
+    *@return transactions all transaction this wallet ever made
+    */
+    function getAllTransactions() external view returns(Transaction[] memory){
+        return transactions;
+    }
 }

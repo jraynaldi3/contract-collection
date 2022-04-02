@@ -3,10 +3,7 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./interface/IMultiSig.sol";
-import "./interface/IMultiSigFactory.sol";
 import "./MultiSig.sol";
-import "hardhat/console.sol";
 
 /**
 * @author Julius Raynaldi
