@@ -1,4 +1,6 @@
-const { waffle } = require("hardhat");
+const abi = require("../artifacts/contracts/MultiSig.sol/MultiSig.json");
+const { waffle, artifacts, ethers } = require("hardhat");
+
 
 const main = async()=>{
     const [signer, randomPerson] = await hre.ethers.getSigners()
@@ -11,6 +13,8 @@ const main = async()=>{
    
     let tx = await contract.createWallet("mama", [randomPerson.address])
     await tx.wait();
+
+    console.log(await tx.wait());
     
 }
 

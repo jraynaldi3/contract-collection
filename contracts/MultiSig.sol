@@ -77,13 +77,12 @@ contract MultiSig is MemberManagement{
 
     Transaction[] public transactions;
     
-    constructor (address[] memory owners) payable {
-        address deployer = IMultiSigFactory(msg.sender)._msgSender();
-        _setupRole("Super", deployer);
+    constructor (address[] memory owners,address sender) payable {
+        _setupRole("Super", sender);
         _setupRole("Super", msg.sender);
         _setRoleAdmin("Owner", "Super");
         _setRoleAdmin("Approver", "Owner");
-        grantRole("Owner", deployer);
+        grantRole("Owner", sender);
         
         for (uint i; i < owners.length;i++){
              grantRole("Owner", owners[i]);

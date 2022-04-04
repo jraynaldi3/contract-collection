@@ -17,9 +17,10 @@ interface IMultiSigFactory {
     * @dev create new multi signature wallet
     * @param _name name of wallet (use for front end)
     * @param owners Array of address become an initial "Owner" role
+    * @param _val initial value of wallet
     * @return address address of new multi signature wallet
      */
-    function createWallet(string memory _name, address[] memory owners) external returns(address);
+    function createWallet(string memory _name, address[] memory owners,uint _val) external returns(address);
 
     /**
     *@dev get all wallet created
