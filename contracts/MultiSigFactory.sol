@@ -19,8 +19,8 @@ contract MultiSigFactory is IMultiSigFactory{
 
     Wallet[] wallets;
 
-    function createWallet(string memory _name, address[] memory owners,uint _val) external override returns(address){
-        address wallet = address((new MultiSig){value:_val}(owners,msg.sender));
+    function createWallet(string memory _name, address[] memory owners) external payable override returns(address){
+        address wallet = address((new MultiSig){value:msg.value}(owners,msg.sender));
         uint newId = _walletIds.current();
         wallets.push(Wallet({
             id: newId,

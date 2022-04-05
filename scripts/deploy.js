@@ -1,5 +1,9 @@
 const { waffle } = require("hardhat");
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 const main = async()=>{
     const [signer] = await hre.ethers.getSigners()
     const contractFactory = await hre.ethers.getContractFactory("MultiSigFactory");
@@ -8,6 +12,8 @@ const main = async()=>{
 
     console.log("Deployed By: ", signer.address);
     console.log("Deployed To: ", contract.address);
+
+    await sleep(60000);
     
     await hre.run("verify:verify", {
         address: contract.address,
