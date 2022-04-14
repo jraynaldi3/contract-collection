@@ -112,6 +112,12 @@ contract MultiSig is MemberManagement{
     * @param duration = duration of transaction
     * @param _data = data for this transaction
     *
+    *Requires :
+        - token address cannot be address 0
+        - destination of transfer cannot be address 0
+        - amount of transfer cannot more that wallet balance 
+        - duration of transaction cannot be 0
+    *
     * emit a {SubmitTransaction} event
     */
     function tokenSubmitTransaction (
@@ -121,24 +127,30 @@ contract MultiSig is MemberManagement{
             uint duration, 
             string calldata _data
         ) public onlyRole("Owner") {
-        uint _id = _transactionId.current();
-        uint endAt = block.timestamp + duration;
+            require(_token != address(0),"Token should not be address 0");
+            require(_to != address(0),"Cannot transfer to address 0");
+            require(duration>0,"Duration cannot be 0");
+            uint balance = IERC20(_token).balanceOf(address(this));
+            require(_amount <= balance,"Not enought balance");
 
-        transactions.push(Transaction({
-            id:_id,
-            tokenSymbol:MultiSigIERC20(_token).symbol(),
-            tokenAddress:_token,
-            to:_to,
-            amount:_amount,
-            data:_data,
-            submitter:_msgSender(),
-            approveCount:0,
-            endDate: endAt,
-            executed: false
-        }));        
+            uint _id = _transactionId.current();
+            uint endAt = block.timestamp + duration;
 
-        emit SubmitTransaction(_id,MultiSigIERC20(_token).symbol(), _to, _amount, _data, endAt);
-        _transactionId.increment();
+            transactions.push(Transaction({
+                id:_id,
+                tokenSymbol:MultiSigIERC20(_token).symbol(),
+                tokenAddress:_token,
+                to:_to,
+                amount:_amount,
+                data:_data,
+                submitter:_msgSender(),
+                approveCount:0,
+                endDate: endAt,
+                executed: false
+            }));        
+
+            emit SubmitTransaction(_id,MultiSigIERC20(_token).symbol(), _to, _amount, _data, endAt);
+            _transactionId.increment();
     }
 
     /**
@@ -149,9 +161,17 @@ contract MultiSig is MemberManagement{
     *@param duration duration of transaction 
     *@param _data transaction data
     *
+    *Require:
+        - destination address cannot be address 0
+        - amount transfer cannot more than balance
+        - duration of transaction cannot be 0
+    *
     * emit {SubmitTransaction} event
     */
     function ethSubmitTransaction (address _to, uint _amount,uint duration, string calldata _data) public onlyRole("Owner"){
+        require(_to != address(0),"Cannot transfer to address 0");
+        require(_amount <= address(this).balance,"Not enought balance ");
+        require(duration>0,"Duration cannot be 0");
         uint _id = _transactionId.current();
         uint endAt = block.timestamp + duration;
 
