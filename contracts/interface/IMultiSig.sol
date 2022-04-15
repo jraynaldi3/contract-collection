@@ -25,5 +25,5 @@ interface IMultiSig is IMemberManagement {
 
     function setQuorum (uint num) external;
 
-
+    function isApprovedBy(uint _id, address _sender) external view returns(bool);
 }

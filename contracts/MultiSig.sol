@@ -304,7 +304,7 @@ contract MultiSig is MemberManagement{
     *@param _id id of transactions
     *@param _sender address of approver
      */
-    function isApproved(uint _id, address _sender) external view returns(bool){
+    function isApprovedBy(uint _id, address _sender) external view returns(bool){
         return approvedBy[_id][_sender];
     }
 }
