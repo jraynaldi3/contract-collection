@@ -286,7 +286,7 @@ contract MultiSig is MemberManagement{
     *@dev approvalCount should fullfill the minimalApproval 
     *@return minimal a minimal number of approval before transaction can be executed
      */
-    function minimalApproval() internal view returns(uint minimal){
+    function minimalApproval() public view returns(uint minimal){
         uint totalMember = getRoleMemberCount("Owner") + getRoleMemberCount("Approver");
         minimal = totalMember * quorum / 100;
     }
@@ -297,5 +297,14 @@ contract MultiSig is MemberManagement{
     */
     function getAllTransactions() external view returns(Transaction[] memory){
         return transactions;
+    }
+
+    /**
+    *@dev return approval of an address, usefull for UI in frontend development
+    *@param _id id of transactions
+    *@param _sender address of approver
+     */
+    function isApproved(uint _id, address _sender) external view returns(bool){
+        return approvedBy[_id][_sender];
     }
 }
